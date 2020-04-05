@@ -5,7 +5,7 @@ from pokemon_teste_base import *
 verificar_online("pokeapi")
 
 class TestPokeapi(unittest.TestCase):
-    '''
+
     @sem_io
     def test_01a_ok(self):
         self.assertEqual(nome_do_pokemon(1), "bulbasaur")
@@ -224,7 +224,7 @@ class TestPokeapi(unittest.TestCase):
         pokemon_nao_existe(lambda : nivel_do_pokemon("Peppa-Pig", 1234), self)
         pokemon_nao_existe(lambda : nivel_do_pokemon("batman", 1234), self)
         pokemon_nao_existe(lambda : nivel_do_pokemon("SpiderMan", 1234), self)
-'''
+
     def test_99a_print(self):
         sem_io.test_print(self)
 

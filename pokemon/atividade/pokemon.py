@@ -1,3 +1,6 @@
+#Tiago da Silva Souza - Ra 1900629
+#Fernanda Teixeira Silva - 1900755
+
 from requests import api
 from dataclasses import dataclass
 """
@@ -86,8 +89,7 @@ def nome_do_pokemon(numero):
     if request.status_code == 200:
         return  dados['name']
     else:
-        raise PokemonNaoExisteException('Pokemon não existe!')
-   
+        raise PokemonNaoExisteException
 """
 2. Dado o nome de um pokémon, qual é o número dele?
 """
@@ -98,7 +100,7 @@ def numero_do_pokemon(nome):
     if request.status_code == 200:
         return  dados['id']
     else:
-        raise PokemonNaoExisteException('Pokemon não existe!')
+        raise PokemonNaoExisteException
 
 """
 3. Dado o nome ou número de um pokémon, qual é o nome da cor (em inglês) predominante dele?
@@ -113,7 +115,7 @@ def color_of_pokemon(nome):
     if request.status_code ==200:
         return  dados['color']['name']
     else:
-        raise PokemonNaoExisteException('Pokemon não existe!')
+        raise PokemonNaoExisteException
 
 """
 4. Dado o nome ou número de um pokémon, qual é o nome da cor (em português) predominante dele?
@@ -153,7 +155,7 @@ def tipos_do_pokemon(nome):
             tipos[x] = dicio[valor['type']['name']]
         return tipos
     else:
-        raise PokemonNaoExisteException('Pokemon não existe!')
+        raise PokemonNaoExisteException
 
 """
 6. Dado o nome de um pokémon, liste de qual pokémon ele evoluiu.
@@ -175,7 +177,7 @@ def evolucao_anterior(nome):
         else: 
             return None
     else:
-        raise PokemonNaoExisteException('Pokemon não existe!')
+        raise PokemonNaoExisteException
 
 """
 7. Dado o nome de um pokémon, liste para quais pokémons ele pode evoluiur.
@@ -187,17 +189,38 @@ Note que esta função dá como resultado somente o próximo passo evoluitivo. A
 Se o pokémon não evolui, retorne uma lista vazia. Por exemplo, evolucoes_proximas('celebi') == []
 """
 def evolucoes_proximas(nome):
+    evolution = []
     check_str(nome)
-    evolution = ""
-    request = api.get(f"http://localhost:8000/api/v2/pokemon-species/{nome.lower()}")
+    nome = nome.lower()
+    request = api.get(f"http://localhost:8000/api/v2/pokemon-species/{nome}")
     dados = request.json()
+
+    def next_evol(nome, lista):
+        for dicio in lista:
+            for chave, valor in dicio.items():
+                if isinstance(valor, dict):
+                    if valor['name'] == nome and len(dicio['evolves_to']) !=0:
+                        nome = 'flag'
+                        next_evol(nome, dicio['evolves_to'])
+                    elif valor['name'] == nome and len(dicio['evolves_to']) ==0:
+                        return evolution
+                    elif nome == 'flag':
+                        evolution.append(valor['name'])
+                    else:
+                        next_evol(nome, dicio['evolves_to'])
+        return evolution
+
     if request.status_code ==200:
         request = api.get(dados['evolution_chain']['url'])
         dados = request.json()
-        print(dados['chain'].keys())
+        if dados['chain']['species']['name'] == nome:
+            nome = "flag"
+            next_evol(nome, dados['chain']['evolves_to'])
+        else: 
+            next_evol(nome, dados['chain']['evolves_to'])       
     else:
-        raise PokemonNaoExisteException('Pokemon não existe!')
-evolucoes_proximas('charmander')
+        raise PokemonNaoExisteException
+    return evolution
 
 """
 8. A medida que ganham pontos de experiência, os pokémons sobem de nível.
@@ -223,7 +246,7 @@ def nivel_do_pokemon(nome, experiencia):
                 nivel = level['level'] 
         return nivel  
     else:
-        raise PokemonNaoExisteException('Pokemon não existe!')
+        raise PokemonNaoExisteException
 
 """
 9. Dado um nome de treinador, cadastre-o na API de treinador.
@@ -233,13 +256,12 @@ def cadastrar_treinador(name):
     check_str(name) 
     request = api.get('http://127.0.0.1:9000/treinador')
     dados = request.json()    
-    #verifica se existem dados no dicionário e se o nome consta nas chaves cadastradas
     if dados.values() and name in dados.keys():
         return False
     else:
         request = api.put(f'http://127.0.0.1:9000/treinador/{name.lower()}', data=name)
         return True
-#cadastrar_treinador('Misty')
+
 """
 10. Imagine que você capturou dois pokémons do mesmo tipo. Para diferenciá-los, você dá nomes diferentes (apelidos) para eles.
 Logo, um treinador pode ter mais do que um pokémon de um determinado tipo, mas não pode ter dois pokémons diferentes com o mesmo apelido.
@@ -247,47 +269,20 @@ Assim sendo, dado um nome de treinador, um apelido de pokémon, um tipo de poké
 Certifique-se de que todos os dados são válidos.
 """
 def cadastrar_pokemon(nome_treinador, apelido_pokemon, tipo_pokemon, experiencia):
-    nome_treinador =nome_treinador.lower()
-    check_str(nome_treinador)
-    tipo = tipos_do_pokemon(tipo_pokemon)
-    cadastro = {'nome': nome_treinador, 'apelido': apelido_pokemon, 'tipo':tipo, 'experiencia': experiencia}
-    request = api.get('http://127.0.0.1:9000/treinador')
-    dados = request.json()
-    if dados.values() and nome_treinador in dados.keys():
-        request = api.put(f'http://127.0.0.1:9000/treinador/{nome_treinador}/{apelido_pokemon}', json=cadastro)
-#cadastrar_pokemon('Misty', 'pokezard', 'charizard', 3000)
+    pass    
+
 """
 11. Dado um nome de treinador, um apelido de pokémon e uma quantidade de experiência, localize esse pokémon e acrescente-lhe a experiência ganha.
 """
 def ganhar_experiencia(nome_treinador, apelido_pokemon, experiencia):
-    nome_treinador = nome_treinador.lower()
-    check_str(nome_treinador)
-    check_str(apelido_pokemon)
-    request = api.get('http://127.0.0.1:9000/treinador')
-    dados =request.json()
-    dict_dados = {'nome':nome_treinador, 'apelido':apelido_pokemon, 'experiencia': experiencia}    
-    if dados.values() and nome_treinador in dados.keys():
-        request = api.post(f'http://127.0.0.1:9000/treinador/{nome_treinador}/{apelido_pokemon}/exp', json =dict_dados)
-#ganhar_experiencia('misty','pokezard', 10000)
+    pass
+  
 """
 12. Dado um nome de treinador e um apelido de pokémon, localize esse pokémon na API do treinador e retorne um objeto da classe Pokemon mostrando:
 Qual é a sua espécie, a sua quantidade de experiência e em que nível ele está.
 """
 def localizar_pokemon(nome_treinador, apelido_pokemon):
-    nome_treinador = nome_treinador.lower()
-    check_str(nome_treinador)
-    check_str(apelido_pokemon)
-    request = api.get(f'http://127.0.0.1:9000/treinador/{nome_treinador}/{apelido_pokemon}')
-    dados = request.json()
-    print(dados)
-    
-    if request.status_code ==200:
-        objPokemon = Pokemon()
-        objPokemon.tipo = dados['tipo']
-        objPokemon.experiencia = dados['experiencia']
-        objPokemon.nivel = dados['nivel']
-    print(objPokemon.tipo)
-#localizar_pokemon('misty', 'pokezard')
+    pass
 """
 13. Dado o nome de um treinador, localize-o na API do treinador e retorne um dicionário contendo como chaves, os apelidos de seus pokémons e como valores os tipos deles.
 """
